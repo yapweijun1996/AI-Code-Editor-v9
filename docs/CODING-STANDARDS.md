@@ -1,15 +1,9 @@
 # Coding Standards
 
-This document outlines the coding standards for the AI-Powered Code Editor project.
+This project follows a set of coding standards to ensure code quality, consistency, and maintainability.
 
-## General
+## Main Guide
 
-*   **Language**: Use modern JavaScript (ES6+).
-*   **Formatting**: Use Prettier for automatic code formatting. A `.prettierrc` file should be included in the project.
-*   **Linting**: Use ESLint to enforce code quality and catch errors early.
+All standards, including language, formatting, naming conventions, and architectural principles, are documented in the main **[Contributing Guide](./CONTRIBUTING.md)**.
 
-## Naming Conventions
-
-*   **Variables**: Use camelCase for variables and functions.
-*   **Classes**: Use PascalCase for classes.
-*   **Files**: Use kebab-case for filenames.
+Please refer to that document for a comprehensive overview of how to contribute to the project.

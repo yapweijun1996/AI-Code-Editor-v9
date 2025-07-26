@@ -1,17 +1,52 @@
-# Architecture
+# Application Architecture
 
-This document outlines the architecture of the AI-Powered Code Editor.
+This document provides a high-level overview of the application's architecture. For a more detailed guide on the project structure, development workflow, and how to contribute, please see the **[Contributing Guide](./CONTRIBUTING.md)**.
 
-## Core Components
+## Core Philosophy: Client-Centric Design
 
-*   **Frontend**: A single-page application built with HTML, CSS, and JavaScript. It uses the Monaco Editor for the text editor and communicates with the backend via a REST API.
-*   **Backend**: A Node.js server using Express. It handles requests from the frontend, communicates with the Google Gemini API, and can execute terminal commands.
-*   **AI Agent**: The agent logic is integrated into the frontend, using the Gemini API for tool-calling and chat functionality.
+The application is architected to be **secure and frontend-heavy**. The majority of the logic, including all file system interactions, the editor, and the AI agent, runs directly in the browser. A minimal backend is used only for tasks that the browser's sandbox cannot perform.
 
-## Session and State Management
+## Component Overview
 
-The application's state management is architected to be robust and resilient, especially during error recovery.
+*   **Frontend**: A single-page application built with vanilla JavaScript, HTML, and CSS. It uses the Monaco Editor and manages all core application logic.
+*   **Backend**: A lightweight Node.js/Express server that serves static files and provides sandboxed execution for terminal commands and URL fetching.
+*   **AI Agent**: The Gemini agent logic is managed entirely on the client-side in `frontend/js/gemini_chat.js`, which defines all available tools and orchestrates the interaction with the model.
 
-*   **Stateful Session Initialization**: The core principle is that a Gemini chat session's history is immutable after creation. Therefore, the application ensures that any new session, whether started fresh or restarted after an error, is initialized correctly.
-*   **Correct History Preservation**: When a session needs to be restarted (e.g., due to a model change or a transient API error), the complete history from the previous session is first retrieved. This history is then passed directly into the `model.startChat({ history: [...] })` method.
-*   **Architectural Soundness**: This approach is the officially supported method by the Google AI SDK and prevents the context loss and cascading failures that occurred with previous, incorrect implementations (which attempted to modify the history of a live session object). The `_startChat(history = [])` function in `frontend/js/gemini_chat.js` is the single source of truth for this logic.
+## End-to-End Workflow
+
+This diagram illustrates the primary interaction flow between the user, frontend, backend, and the Gemini AI.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend (Browser) as FE
+    participant FileSystem API as FS
+    participant Backend (Node.js) as BE
+    participant Gemini AI as AI
+
+    User->>FE: Enters prompt (e.g., "Read app.js and tell me what it does")
+    FE->>AI: Sends user prompt
+
+    alt Client-Side Tool Execution (e.g., read_file)
+        AI-->>FE: Requests tool call: read_file('app.js')
+        FE->>FS: Uses File System Access API to get file handle
+        FS-->>FE: Returns file handle
+        FE->>FS: Reads file content
+        FS-->>FE: Returns file content
+        FE-->>AI: Sends file content as tool response
+    else Backend Tool Execution (e.g., run_terminal_command)
+        AI-->>FE: Requests tool call: run_terminal_command('ls -l')
+        FE->>BE: POST /api/execute-tool with command
+        BE->>BE: Spawns process with node-pty
+        BE-->>FE: Returns command output (JSON)
+        FE-->>AI: Sends command output as tool response
+    end
+
+    AI->>AI: Processes tool result and formulates answer
+    AI-->>FE: Streams final text response to user
+    FE->>User: Displays formatted AI response in chat
+```
+
+## State Management
+
+The application's state, including API keys and the handle to the open project folder, is persisted in the browser's **IndexedDB**. This allows for seamless session restoration between visits.
