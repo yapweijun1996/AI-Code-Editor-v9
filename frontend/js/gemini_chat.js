@@ -9,6 +9,7 @@ export const GeminiChat = {
     isSending: false,
     isCancelled: false,
     chatSession: null,
+    model: null,
     activeModelName: '',
     activeMode: '',
     lastRequestTime: 0,
@@ -128,6 +129,7 @@ export const GeminiChat = {
                 tools: allTools,
             });
 
+            this.model = model;
             this.chatSession = model.startChat({
                 history: history,
                 safetySettings: [
@@ -467,6 +469,11 @@ export const GeminiChat = {
                     console.log(
                         `[AI Turn] Attempting to send with key index: ${ApiKeyManager.currentIndex} using model: ${modelName}`,
                     );
+
+                    // Count request tokens
+                    if (!this.model) throw new Error('Model not initialized for token counting.');
+                    const requestTokenResult = await this.model.countTokens({ contents: [{ role: 'user', parts: promptParts }] });
+
                     const result = await this.chatSession.sendMessageStream(promptParts);
 
                     let fullResponseText = '';
@@ -490,6 +497,13 @@ export const GeminiChat = {
                     if (fullResponseText) {
                         console.log('[AI Reply]', fullResponseText);
                     }
+
+                    // Count response tokens
+                    const responseTokenResult = await this.model.countTokens({
+                        contents: [{ role: 'model', parts: [{ text: fullResponseText }] }],
+                    });
+
+                    UI.updateTokenDisplay(requestTokenResult.totalTokens, responseTokenResult.totalTokens);
 
                     if (functionCalls.length > 0) {
                         const toolPromises = functionCalls.map((call) =>

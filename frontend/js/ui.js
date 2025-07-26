@@ -164,3 +164,16 @@ export function updateImagePreview(imagePreviewContainer, uploadedImage, clearIm
         imagePreviewContainer.style.display = 'none';
     }
 }
+export function updateTokenDisplay(requestTokens, responseTokens) {
+    const display = document.getElementById('token-usage-display');
+    const requestEl = document.getElementById('token-request');
+    const responseEl = document.getElementById('token-response');
+    const totalEl = document.getElementById('token-total');
+
+    if (display && requestEl && responseEl && totalEl) {
+        requestEl.textContent = `Req: ${requestTokens}`;
+        responseEl.textContent = `Res: ${responseTokens}`;
+        totalEl.textContent = `Total: ${requestTokens + responseTokens}`;
+        display.style.display = 'flex';
+    }
+}
