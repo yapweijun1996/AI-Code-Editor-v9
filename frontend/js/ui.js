@@ -2,9 +2,9 @@ import { buildTree } from './file_system.js';
 
 export function initResizablePanels(editor) {
     window.splitInstance = Split(['#file-tree-container', '#editor-container', '#chat-panel'], {
-        sizes: [15, 55, 30],
-        minSize: [0, 300, 200],
-        gutterSize: 10,
+        sizes: [15, 30, 55],
+        minSize: [150, 150, 540],
+        gutterSize: 5,
         cursor: 'col-resize',
         onDragEnd: () => {
             if (editor) {
@@ -16,7 +16,7 @@ export function initResizablePanels(editor) {
 
 export function relayout(editor) {
     if (window.splitInstance) {
-        window.splitInstance.setSizes([15, 55, 30]);
+        window.splitInstance.setSizes([15, 30, 55]);
     }
     if (editor) {
         editor.layout();

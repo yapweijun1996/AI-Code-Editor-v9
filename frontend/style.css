@@ -236,7 +236,6 @@ body.resizing {
 .gutter {
   background-color: var(--border);
   cursor: col-resize;
-  width: 10px !important;
   z-index: 2;
 }
 
