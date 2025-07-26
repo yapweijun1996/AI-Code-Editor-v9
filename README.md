@@ -37,6 +37,40 @@ The editor's architecture has been streamlined to use a local Node.js server, si
 
 ---
 
+## Application Workflow
+
+The following diagram illustrates the core workflow, showing how the browser-based frontend interacts with the local file system, the backend server, and the Gemini AI to execute tasks.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend (Browser) as FE
+    participant FileSystem API as FS
+    participant Backend (Node.js) as BE
+    participant Gemini AI as AI
+
+    User->>FE: Enters prompt (e.g., "Read app.js")
+    FE->>AI: Sends user prompt
+
+    alt Client-Side Tool (e.g., read_file)
+        AI-->>FE: Requests tool call: read_file('app.js')
+        FE->>FS: Uses File System Access API
+        FS-->>FE: Returns file content
+        FE-->>AI: Sends tool response
+    else Backend Tool (e.g., run_terminal_command)
+        AI-->>FE: Requests tool call: run_terminal_command('ls -l')
+        FE->>BE: POST /api/execute-tool
+        BE-->>FE: Returns command output
+        FE-->>AI: Sends tool response
+    end
+
+    AI->>AI: Processes result & formulates answer
+    AI-->>FE: Streams final response
+    FE->>User: Displays formatted AI response
+```
+
+---
+
 ## Getting Started
 
 Running the application is now managed by simple, powerful scripts for all major operating systems.
