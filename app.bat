@@ -16,7 +16,7 @@ if defined NPM_DIR (
 )
 
 REM Set the name for the PM2 process
-set "PM2_APP_NAME=ai-editor"
+set "PM2_APP_NAME=ai-editor-backend"
 
 REM Check for administrator privileges
 net session >nul 2>&1
@@ -72,10 +72,10 @@ if /i "%choice%"=="X" goto eradicate_pm2
 goto menu
 
 :install
-echo --- 1. Installing Node.js dependencies...
-call npm install
+echo --- 1. Installing backend Node.js dependencies...
+call cd backend ^&^& npm install
 if %errorLevel% neq 0 (
-    echo [ERROR] Failed to install Node.js dependencies.
+    echo [ERROR] Failed to install backend Node.js dependencies.
     pause
     goto menu
 )
@@ -93,8 +93,8 @@ pause
 goto menu
 
 :start
-echo Starting the server with PM2...
-call npm start
+echo Starting the backend server with PM2...
+call pm2 start backend/index.js --name "%PM2_APP_NAME%"
 if %errorLevel% neq 0 (
     echo [ERROR] Failed to start the server.
     pause
@@ -104,11 +104,11 @@ pause
 goto menu
 
 :stop
-call npm run stop
+call pm2 stop "%PM2_APP_NAME%"
 goto menu
 
 :restart
-call npm run restart
+call pm2 restart "%PM2_APP_NAME%"
 goto menu
 
 :status

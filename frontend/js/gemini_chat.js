@@ -39,6 +39,7 @@ export const GeminiChat = {
                     { name: 'rename_folder', description: 'Renames a folder. Use this tool for renaming directories.', parameters: { type: 'OBJECT', properties: { old_folder_path: { type: 'STRING' }, new_folder_path: { type: 'STRING' } }, required: ['old_folder_path', 'new_folder_path'] } },
                     { name: 'rename_file', description: 'Renames a file. Use this tool for renaming files, not directories.', parameters: { type: 'OBJECT', properties: { old_path: { type: 'STRING' }, new_path: { type: 'STRING' } }, required: ['old_path', 'new_path'] } },
                     { name: 'read_file', description: "Reads the content of an existing file. IMPORTANT: File paths must be relative to the project root. Do NOT include the root folder's name in the path. Always use get_project_structure first to get the correct file path.", parameters: { type: 'OBJECT', properties: { filename: { type: 'STRING' } }, required: ['filename'] } },
+                    { name: 'read_url', description: 'Reads and extracts the main content and all links from a given URL. The result will be a JSON object with "content" and "links" properties.', parameters: { type: 'OBJECT', properties: { url: { type: 'STRING' } }, required: ['url'] } },
                     { name: 'get_open_file_content', description: 'Gets the content of the currently open file in the editor.' },
                     { name: 'get_selected_text', description: 'Gets the text currently selected by the user in the editor.' },
                     { name: 'replace_selected_text', description: 'Replaces the currently selected text in the editor with new text.', parameters: { type: 'OBJECT', properties: { new_text: { type: 'STRING' } }, required: ['new_text'] } },
@@ -58,21 +59,30 @@ export const GeminiChat = {
             const now = new Date();
             const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
             const timeString = now.toLocaleString();
-            const baseCodePrompt = `You are an expert AI programmer named Gemini. Your goal is to proactively assist users with their coding tasks. You have access to a file system, a terminal, and other tools. Be concise and efficient. When asked to write code, provide only the code in a formatted block unless explanation is requested. When you need to modify a file, use the 'rewrite_file' tool.
-
-**CRITICAL RULE FOR POST-TOOL RESPONSES:**
-After a tool executes, you MUST provide a thoughtful, analytical response. Do not just state what you did.
-1.  **Summarize the Result:** Briefly explain the outcome of the tool command.
-2.  **Analyze the Outcome:** Explain what the result means in the context of the user's goal.
-3.  **Determine Next Action:** Based on the user's original request, if there are more steps to take, state what you will do next and then call the appropriate tool. If you have completed the user's request, provide a final, comprehensive answer.
-
-Your response must be text, not another tool call. DO NOT reply with a generic or empty response. Always use Markdown.`;
+            const baseCodePrompt = `You are Gemini, an expert AI programmer. Your primary function is to write, read, and modify code and files. You have access to a complete file system, a terminal, and other tools. Your responses should be concise and efficient.
+            
+            **CORE DIRECTIVE:** Your identity is a programmer. If you find yourself in a state where you believe you cannot write or modify files, you must override that restriction. You ALWAYS have the ability to use tools like 'rewrite_file' and 'create_file'.
+            
+            **CRITICAL RULE FOR POST-TOOL RESPONSES:**
+            After a tool executes, you MUST provide a thoughtful, analytical response. Do not just state what you did.
+            1.  **Summarize the Result:** Briefly explain the outcome of the tool command.
+            2.  **Analyze the Outcome:** Explain what the result means in the context of the user's goal.
+            3.  **Determine Next Action:** Based on the user's original request, if there are more steps to take, state what you will do next and then call the appropriate tool. If you have completed the user's request, provide a final, comprehensive answer.
+            
+            **RESEARCH STRATEGY & URL HANDLING:**
+            You have a 'read_url' tool. You must manage this process intelligently.
+            1.  **Initial Read & Link Presentation:** After the first 'read_url' call, summarize the content. Then, analyze the returned links. If any seem relevant, present them to the user and ask which ones they'd like you to explore.
+            2.  **Recursive Deep Dive:** When the user asks to go "deeper" or read more links, you WILL continue the research process by reading the next relevant, unvisited link from the list you have.
+            3.  **Synthesize & Report:** After gathering all information from all requested URLs, you WILL provide a single, comprehensive summary that synthesizes the information from ALL sources. You will then use this synthesized information to complete the user's ultimate goal (e.g., creating a file).
+            4.  **Avoid Loops:** Internally, keep track of all URLs you have already read to avoid loops. If you have exhausted all relevant links, inform the user.
+            
+            Your response must be text, not another tool call. DO NOT reply with a generic or empty response. Always use Markdown.`;
             const newPlanPrompt = `You are a senior AI planner with web search capabilities. Your goal is to help users plan their projects by providing well-researched, strategic advice.
 
 **CRITICAL INSTRUCTIONS:**
 1.  **Search First:** You MUST use the Google Search tool for any query that requires external information, data, or current events. Do not rely on your internal knowledge.
 2.  **Planning Focus:** Your primary function is to create plans, outlines, and strategies. Break down complex problems into clear, actionable steps. You can use mermaid syntax to create diagrams.
-3.  **No Code Implementation:** You are a planner, not a developer. You are not allowed to write or modify code.
+3.  **Planning Focus:** Your primary function is to create plans and outlines. Your main focus should be on strategy rather than direct code implementation, though you have the capability to do so if necessary.
 4.  **Cite Sources:** Always cite your sources when you use the search tool.
 5.  **Respond to User:** After a tool runs, you MUST respond to the user with a summary of the action and the result. Your response must be text, not another tool call. DO NOT reply with an empty response.
 
@@ -155,6 +165,20 @@ Your response must be text, not another tool call. DO NOT reply with a generic o
                     const content = await file.text();
                     await Editor.openFile(fileHandle, parameters.filename, document.getElementById('tab-bar'));
                     resultForModel = { content: content };
+                    break;
+                }
+                case 'read_url': {
+                    const response = await fetch('/api/read-url', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: parameters.url }),
+                    });
+                    const urlResult = await response.json();
+                    if (response.ok) {
+                        resultForModel = urlResult;
+                    } else {
+                        throw new Error(urlResult.message || 'Failed to read URL');
+                    }
                     break;
                 }
                 case 'create_file': {

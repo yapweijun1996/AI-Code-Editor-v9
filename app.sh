@@ -4,7 +4,7 @@
 cd "$(dirname "$0")"
 
 # PM2 App Name
-PM2_APP_NAME="ai-editor"
+PM2_APP_NAME="ai-editor-backend"
 
 # Check for root/sudo privileges
 IS_ADMIN=false
@@ -30,10 +30,10 @@ check_admin() {
 }
 
 install_deps() {
-    echo "--- 1. Installing Node.js dependencies..."
-    npm install
+    echo "--- 1. Installing backend Node.js dependencies..."
+    (cd backend && npm install)
     if [ $? -ne 0 ]; then
-        echo "[ERROR] Failed to install Node.js dependencies."
+        echo "[ERROR] Failed to install backend Node.js dependencies."
         read -p "Press Enter to continue..."
         return
     fi
@@ -51,21 +51,23 @@ install_deps() {
 }
 
 start_server() {
-    echo "Starting the server with PM2..."
-    npm start
+    echo "Starting the backend server with PM2..."
+    pm2 start backend/index.js --name "$PM2_APP_NAME"
     if [ $? -ne 0 ]; then
-        echo "[ERROR] Failed to start the server."
+        echo "[ERROR] Failed to start the backend server."
         read -p "Press Enter to continue..."
     fi
     read -p "Press Enter to continue..."
 }
 
 stop_server() {
-    npm run stop
+    echo "Stopping the server..."
+    pm2 stop "$PM2_APP_NAME"
 }
 
 restart_server() {
-    npm run restart
+    echo "Restarting the server..."
+    pm2 restart "$PM2_APP_NAME"
 }
 
 show_status() {
