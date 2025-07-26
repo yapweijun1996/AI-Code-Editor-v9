@@ -481,6 +481,13 @@ export const GeminiChat = {
                             },
                         }));
                     } else {
+                        // This is the final turn, a text response is expected.
+                        if (!fullResponseText) {
+                            // The model returned an empty response, which is a bug.
+                            // We should inform the user instead of failing silently.
+                            UI.appendMessage(chatMessages, '[AI returned an empty response. Please try again.]', 'ai');
+                            console.error('AI returned an empty response after a tool call.');
+                        }
                         running = false;
                     }
                 } catch (error) {
