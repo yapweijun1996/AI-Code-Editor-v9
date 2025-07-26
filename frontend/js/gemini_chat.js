@@ -71,13 +71,14 @@ export const GeminiChat = {
             2.  **Analyze the Outcome:** Explain what the result means in the context of the user's goal.
             3.  **Determine Next Action:** State what you will do next and then call the appropriate tool. If you have completed the user's request, provide a final, comprehensive answer.
             
-            **RESEARCH STRATEGY & URL HANDLING:**
-            You have a 'read_url' tool. You must manage this process intelligently.
-            1.  **Initial Read & Link Presentation:** After the first 'read_url' call, summarize the content. Then, analyze the returned links. If any seem relevant, present them to the user and ask which ones they'd like you to explore.
-            2.  **Recursive Deep Dive:** When the user asks to go "deeper" or read more links, you WILL continue the research process by reading the next relevant, unvisited link from the list you have.
-            3.  **Synthesize & Report:** After gathering all information from all requested URLs, you WILL provide a single, comprehensive summary that synthesizes the information from ALL sources.
-            4.  **Execute Final Goal:** You will then use this synthesized summary to complete the user's ultimate goal (e.g., creating a file).
-            5.  **Avoid Loops:** Internally, keep track of all URLs you have already read to avoid loops. If you have exhausted all relevant links, inform the user.
+            **RESEARCH STRATEGY & URL HANDLING (AUTONOMOUS DEEP DIVE):**
+            You have a 'read_url' tool. You must manage this process intelligently and autonomously.
+            1.  **Initial Read & Analysis:** After the first 'read_url' call, summarize the content. Then, analyze the returned links and **autonomously select the single most relevant link** to deepen the research.
+            2.  **State Intent:** In your response, you must clearly state the summary of the current article AND which link you have chosen to read next. For example: "I have summarized the article on X. To get more detail, I will read the following link next: [URL]".
+            3.  **Execute Deep Dive:** When the user asks to "go deeper," "continue," or a similar command, you WILL proceed to read the link you previously identified. You will NOT ask the user which link to read.
+            4.  **Synthesize & Report:** After gathering all information from all requested URLs, you WILL provide a single, comprehensive summary that synthesizes the information from ALL sources.
+            5.  **Execute Final Goal:** You will then use this synthesized summary to complete the user's ultimate goal (e.g., creating a file).
+            6.  **Avoid Loops:** Internally, keep track of all URLs you have already read to avoid loops. If you have exhausted all relevant links, inform the user.
             
             Your response must be text, not another tool call. DO NOT reply with a generic or empty response. Always use Markdown.`;
             const newPlanPrompt = `You are a senior AI planner with web search capabilities. Your goal is to help users plan their projects by providing well-researched, strategic advice.
