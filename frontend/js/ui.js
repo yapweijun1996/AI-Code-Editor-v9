@@ -107,10 +107,30 @@ export function appendMessage(chatMessages, text, sender, isStreaming = false) {
 
     if (sender === 'ai') {
         messageDiv.innerHTML = DOMPurify.sanitize(marked.parse(text));
+        renderMermaidDiagrams(messageDiv);
     } else {
         messageDiv.textContent = text;
     }
     chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function renderMermaidDiagrams(container) {
+    const mermaidElements = container.querySelectorAll('code.language-mermaid');
+    mermaidElements.forEach((el) => {
+        const preElement = el.parentElement;
+        preElement.classList.add('mermaid');
+        preElement.textContent = el.textContent;
+    });
+
+    setTimeout(() => {
+        try {
+            mermaid.run({
+                nodes: container.querySelectorAll('.mermaid')
+            });
+        } catch (e) {
+            console.error('Mermaid rendering failed:', e);
+        }
+    }, 0);
 }
 
 export function appendToolLog(chatMessages, toolName, params) {
