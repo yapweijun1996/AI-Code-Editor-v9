@@ -118,7 +118,10 @@ export const GeminiChat = {
 - Timezone: ${timeZone}`;
 
             if (mode === 'plan') {
-                allTools = [{ googleSearch: {} }];
+                allTools = [
+                    { urlContext: {} },
+                    { googleSearch: {}},
+                ];
                 systemInstructionText = newPlanPrompt;
             } else {
                 systemInstructionText = baseCodePrompt;
@@ -134,10 +137,10 @@ export const GeminiChat = {
             this.chatSession = model.startChat({
                 history: history,
                 safetySettings: [
-                    { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-                    { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-                    { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-                    { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+                    { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+                    { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+                    { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+                    { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
                 ],
             });
 
